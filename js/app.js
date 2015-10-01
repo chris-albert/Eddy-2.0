@@ -4,6 +4,23 @@ $(function() {
     url: 'config/api.json',
     parse: function(d) {
       console.log(d);
+      var tags = {};
+      _.each(d.tags,function(tag) {
+        tags[tag.name] = tag;
+        tags[tag.name].paths = [];
+      });
+      _.each(d.paths,function(pathObj,path) {
+        _.each(pathObj,function(opObj,op) {
+          _.each(opObj.tags,function(tag) {
+            tags[tag].paths.push({
+              path      : path,
+              operation : op,
+              definition: opObj
+            });
+          });
+        });
+      });
+      d.processed = tags;
       return d;
     }
   });
@@ -17,6 +34,7 @@ $(function() {
     },
     render: function() {
       var data = [];
+      console.log(this.model.attributes);
       data.push(this.model.get('host'));
       data.push(this.model.get('basePath'));
       data.push(this.model.get('info').title);
