@@ -1,0 +1,69 @@
+<div class="ui raised segments">
+{{#each this}}
+    <div class="ui fluid card">
+        <div class="content">
+            <div class="header" style="text-transform: capitalize;">
+                {{name}}
+            </div>
+        </div>
+        <div class="content">
+            <p>{{description}}</p>
+            {{#each paths}}
+                <div class="ui fluid card">
+                    <div class="content">
+                        <h4 class="ui header">
+                            <div class="ui grid">
+                                <div class="eight wide column">{{path}}</div>
+                                <div class="eight wide right aligned column">
+                                    <div class="ui mini horizontal list">
+                                    {{#each operations}}
+                                        <div class="item">
+                                            <a class="ui mini label" style="text-transform: uppercase">
+                                                {{this}}
+                                            </a>
+                                        </div>
+                                    {{/each}}
+                                    </div>
+                                </div>
+                            </div>
+                        </h4>
+                    </div>
+                    {{#each definitions}}
+                        <div class="content api-detail">
+                            <span>
+                                <span class="ui mini label" style="text-transform: uppercase">
+                                {{operation}}
+                                </span>
+                                <span>
+                                    {{summary}}
+                                </span>
+                            </span>
+                            <p class="meta">{{description}}</p>
+                            {{#if parameters}}
+                            <table class="ui celled table">
+                                <thead>
+                                <tr>
+                                    <th>Parameters</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{#each parameters}}
+                                    <tr>
+                                        <td>
+                                            <div class="ui mini label horizontal {{requiredColor}}">{{requiredText}}</div>
+                                            <span style="font-weight: bold">{{name}}</span>
+                                            <p class="meta">{{typeText}}</p>
+                                        </td>
+                                    </tr>
+                                {{/each}}
+                                </tbody>
+                            </table>
+                            {{/if}}
+                        </div>
+                    {{/each}}
+                </div>
+            {{/each}}
+        </div>
+    </div>
+{{/each}}
+</div>

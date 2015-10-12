@@ -4,7 +4,9 @@
   "description": "Editorial created from swagger api docs.",
   "main": "index.js",
   "dependencies": {
+    "backbone": "^1.2.3",
     "better-console": "^0.2.4",
+    "bluebird": "^2.10.2",
     "del": "^2.0.2",
     "extend": "^3.0.0",
     "gulp": "^3.9.0",
@@ -30,13 +32,19 @@
     "gulp-uglify": "^1.4.1",
     "gulp-util": "^3.0.6",
     "gulp-watch": "^4.3.5",
+    "handlebars": "^4.0.3",
+    "hbsfy": "^2.3.1",
+    "jquery": "^2.1.4",
     "map-stream": "0.0.6",
     "require-dot-file": "^0.4.0",
     "run-sequence": "^1.1.4",
     "semantic-ui": "^2.1.4",
+    "underscore": "^1.8.3",
     "yamljs": "^0.2.4"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "grunt-browserify": "^4.0.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
