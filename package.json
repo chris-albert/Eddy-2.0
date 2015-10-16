@@ -8,6 +8,7 @@
     "better-console": "^0.2.4",
     "bluebird": "^2.10.2",
     "del": "^2.0.2",
+    "domready": "^1.0.8",
     "extend": "^3.0.0",
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "^3.0.2",
@@ -40,6 +41,7 @@
     "run-sequence": "^1.1.4",
     "semantic-ui": "^2.1.4",
     "underscore": "^1.8.3",
+    "underscore.string": "^3.2.2",
     "yamljs": "^0.2.4"
   },
   "devDependencies": {
