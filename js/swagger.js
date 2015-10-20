@@ -45,6 +45,7 @@ var Parameters = Backbone.Model.extend({
       return schema;
     }
     return {};
+
   },
   buildParameters: function(schema) {
     var self = this;
@@ -67,7 +68,6 @@ var Parameters = Backbone.Model.extend({
 var ApiModel = Backbone.Model.extend({
   url: 'config/api.json',
   parse: function(d) {
-    console.log(d);
     var tags = {},self = this;
     _.each(d.tags,function(tag) {
       tags[tag.name] = tag;
@@ -122,9 +122,10 @@ var ApiInfo = Backbone.View.extend({
   },
   renderTemplate: function() {
     var tempView = new Template.TemplateView({
-      template: 'test.hbs',
-      el: '.api-data',
-      data: this.model.get('processed')
+      template: 'test',
+      el      : '.api-data',
+      data    : this.model.get('processed'),
+      partials: ['api-detail']
     });
   }
 });

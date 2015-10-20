@@ -29,37 +29,7 @@
                         </h4>
                     </div>
                     {{#each definitions}}
-                        <div class="content api-detail">
-                            <span>
-                                <span class="ui mini label" style="text-transform: uppercase">
-                                {{operation}}
-                                </span>
-                                <span>
-                                    {{summary}}
-                                </span>
-                            </span>
-                            <p class="meta">{{description}}</p>
-                            {{#if parameters}}
-                            <table class="ui celled table">
-                                <thead>
-                                <tr>
-                                    <th>Parameters</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {{#each parameters}}
-                                    <tr>
-                                        <td>
-                                            <div class="ui mini label horizontal {{requiredColor}}">{{requiredText}}</div>
-                                            <span style="font-weight: bold">{{name}}</span>
-                                            <p class="meta">{{typeText}}</p>
-                                        </td>
-                                    </tr>
-                                {{/each}}
-                                </tbody>
-                            </table>
-                            {{/if}}
-                        </div>
+                        {{> api-detail}}
                     {{/each}}
                 </div>
             {{/each}}
