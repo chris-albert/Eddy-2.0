@@ -12,9 +12,6 @@ var TemplateModel = Backbone.Model.extend({
     this.url = this.templateDir + '/' + data.template;
     this.listenTo(this,'error',this.error);
   },
-  parse: function(d) {
-    console.log("parse");
-  },
   sync: function() {
     var self = this;
     Backbone.ajax({
@@ -96,6 +93,7 @@ var TemplateView = Backbone.View.extend({
   render: function() {
     this.$el.html(this.model.hbs(this.data));
     this.$el.parent().removeClass('loading');
+    this.trigger('rendered');
   }
 });
 

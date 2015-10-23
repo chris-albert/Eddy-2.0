@@ -1,0 +1,23 @@
+<div class="ui fluid card">
+    <div class="content">
+        <h4 class="ui header">
+            <div class="ui grid">
+                <div class="eight wide column">{{path}}</div>
+                <div class="eight wide right aligned column">
+                    <div class="ui mini horizontal list">
+                        {{#each operations}}
+                            <div class="item">
+                                <a class="ui mini label" style="text-transform: uppercase">
+                                    {{this}}
+                                </a>
+                            </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </h4>
+    </div>
+    {{#each definitions}}
+        {{> api-detail}}
+    {{/each}}
+</div>

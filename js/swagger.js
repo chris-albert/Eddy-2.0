@@ -2,6 +2,7 @@ var _          = require('underscore');
 var Backbone   = require('backbone');
 var Eddy       = require('./eddy');
 var Template   = require('./template-loader');
+//var Semantic   = require('../semantic/dist/semantic.min.js');
 var _String    = require("underscore.string");
 
 var Parameters = Backbone.Model.extend({
@@ -105,6 +106,7 @@ var ApiModel = Backbone.Model.extend({
 var ApiInfo = Backbone.View.extend({
   el: '.api-info',
   model: new ApiModel(),
+  templateView: null,
   initialize: function() {
     this.listenTo(this.model,'sync',this.render);
     this.model.fetch();
@@ -121,12 +123,16 @@ var ApiInfo = Backbone.View.extend({
     this.renderTemplate();
   },
   renderTemplate: function() {
-    var tempView = new Template.TemplateView({
+    this.templateView = new Template.TemplateView({
       template: 'test',
       el      : '.api-data',
       data    : this.model.get('processed'),
-      partials: ['api-detail']
+      partials: ['api-endpoint','api-detail']
     });
+    this.listenTo(this.templateView,'rendered',this.templateRendered);
+  },
+  templateRendered: function() {
+    this.$('.ui.accordion').accordion();
   }
 });
 
