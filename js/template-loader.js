@@ -1,10 +1,12 @@
 var _          = require('underscore');
 var Backbone   = require('backbone');
+var $          = require('jquery');
 var Handlebars = require('handlebars');
+
+var templateCache = {};
 
 var TemplateModel = Backbone.Model.extend({
   templateDir: 'handlebars',
-  hbsRaw     : null,
   hbs        : null,
   handlebars : null,
   initialize: function(data) {
@@ -14,19 +16,26 @@ var TemplateModel = Backbone.Model.extend({
   },
   sync: function() {
     var self = this;
-    Backbone.ajax({
-      url: this.url
-    }).then(function(d) {
-      self.onHbs(d);
-    });
+    console.log(templateCache[this.url]);
+    if(templateCache[this.url]) {
+      this.hbs = templateCache[this.url];
+      this.trigger('sync');
+    } else {
+      Backbone.ajax({
+        url: this.url
+      }).then(function (d) {
+        self.onHbs(d);
+      });
+    }
   },
-  onHbs: function(hbs) {
-    this.hbsRaw = hbs;
-    this.compile();
+  onHbs: function(hbsRaw) {
+    this.compile(hbsRaw);
+    console.log('hey')
+    templateCache[this.url] = this.hbs;
     this.trigger('sync');
   },
-  compile: function() {
-    this.hbs = this.handlebars.compile(this.hbsRaw);
+  compile: function(hbsRaw) {
+    this.hbs = this.handlebars.compile(hbsRaw);
   },
   error: function(e) {
     console.log('in error');
@@ -42,11 +51,13 @@ var TemplateView = Backbone.View.extend({
   partialHash : null,
   mainLoadedCount: 0,
   partialLoadedCount: 0,
+  insertEl: null,
   initialize: function(d) {
     this.data = d.data;
     this.model = new TemplateModel({template: d.template + '.hbs'});
-    this.partials = d.partials;
+    this.partials = d.partials || [];
     this.partialHash = {};
+
     this.load();
   },
   load: function() {
@@ -82,18 +93,15 @@ var TemplateView = Backbone.View.extend({
   },
   allLoaded: function() {
     this.attachPartials();
-    this.render();
+    this.template = this.model.hbs(this.data);
+    this.$el = $('<div />').html(this.template).contents();
+    this.trigger('loaded');
   },
   attachPartials: function() {
     var self = this;
     _.each(this.partialHash,function(template,name) {
        self.model.handlebars.registerPartial(name,template.hbs);
     });
-  },
-  render: function() {
-    this.$el.html(this.model.hbs(this.data));
-    this.$el.parent().removeClass('loading');
-    this.trigger('rendered');
   }
 });
 

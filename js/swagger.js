@@ -20,7 +20,6 @@ var Parameters = Backbone.Model.extend({
     });
   },
   buildQuery: function(parameter) {
-    console.log(parameter);
     var view = new (Eddy.ParameterView.extend({
       name       : parameter.name,
       type       : parameter.type,
@@ -103,8 +102,94 @@ var ApiModel = Backbone.Model.extend({
   }
 });
 
+var ApiEndpoint = Backbone.View.extend({
+  data: null,
+  initialize: function(opt) {
+    this.model = opt.data;
+    this.renderTemplate();
+  },
+  renderTemplate: function() {
+    this.templateView = new Template.TemplateView({
+      template: 'api-endpoint',
+      el      : '.api-endpoint',
+      data    : this.model
+    });
+    this.listenTo(this.templateView,'loaded',this.templateLoaded);
+  },
+  templateLoaded: function() {
+    var self = this;
+    _.each(this.model.definitions,function(definition) {
+      var apiDetail = new ApiDetail({
+          data: definition
+      });
+      self.listenTo(apiDetail.templateView,'loaded',function() {
+        self.templateView.$el.append(apiDetail.templateView.$el);
+      });
+    });
+  }
+});
+
+var ApiDetail = Backbone.View.extend({
+  data: null,
+  initialize: function(opt) {
+    this.model = opt.data;
+    this.renderTemplate();
+  },
+  renderTemplate: function() {
+    this.templateView = new Template.TemplateView({
+      template: 'api-detail',
+      el      : '.api-detail',
+      data    : this.model
+    });
+  }
+});
+
+var ApiGroup = Backbone.View.extend({
+  data: null,
+  appendTo: null,
+  initialize: function(opt) {
+    this.model = opt.data;
+    this.renderTemplate();
+  },
+  renderTemplate: function() {
+    this.templateView = new Template.TemplateView({
+      template: 'api-group',
+      el      : '.api-group',
+      data    : this.model
+    });
+    this.listenTo(this.templateView,'loaded',this.templateLoaded);
+  },
+  templateLoaded: function() {
+    this.children = [];
+    var self = this;
+    _.each(this.model.paths,function(path) {
+      var apiEndpoint = new ApiEndpoint({
+        data: path
+      });
+      self.children.push(apiEndpoint);
+      self.listenTo(apiEndpoint.templateView,'loaded',function() {
+        self.templateView.$('.endpoint').append(apiEndpoint.templateView.$el);
+      });
+    });
+  }
+});
+
+var ApiData = Backbone.View.extend({
+  el: 'api-info',
+  initialize: function(opt) {
+    this.model = opt.model;
+  },
+  render: function() {
+    var data = [];
+    data.push(this.model.get('host'));
+    data.push(this.model.get('basePath'));
+    data.push(this.model.get('info').title);
+    data.push(this.model.get('info').version);
+  }
+});
+
 var ApiInfo = Backbone.View.extend({
-  el: '.api-info',
+  el: '.api-data',
   model: new ApiModel(),
   templateView: null,
   initialize: function() {
@@ -112,27 +197,28 @@ var ApiInfo = Backbone.View.extend({
     this.model.fetch();
   },
   render: function() {
-    var data = [];
-    console.log(this.model.attributes);
-    data.push(this.model.get('host'));
-    data.push(this.model.get('basePath'));
-    data.push(this.model.get('info').title);
-    data.push(this.model.get('info').version);
-    this.$el.html(data.join(" - "));
-    this.$el.parent().removeClass('loading');
     this.renderTemplate();
   },
   renderTemplate: function() {
     this.templateView = new Template.TemplateView({
-      template: 'test',
-      el      : '.api-data',
-      data    : this.model.get('processed'),
-      partials: ['api-endpoint','api-detail']
+      template: 'api-container',
+      el      : '.api-container',
+      data    : this.model.get('processed')
     });
-    this.listenTo(this.templateView,'rendered',this.templateRendered);
+    this.listenTo(this.templateView,'loaded',this.templateLoaded);
   },
-  templateRendered: function() {
-    this.$('.ui.accordion').accordion();
+  templateLoaded: function() {
+    this.$el.html(this.templateView.$el);
+    this.$el.parent().removeClass('loading');
+    var self = this;
+    this.children = [];
+    _.each(this.model.get('processed'),function(group,name) {
+      var apiGroup = new ApiGroup({data: group});
+      self.children.push(apiGroup);
+      self.listenTo(apiGroup.templateView,'loaded',function() {
+        self.templateView.$el.append(apiGroup.templateView.$el);
+      });
+    });
   }
 });
 
