@@ -16,7 +16,7 @@ var TemplateModel = Backbone.Model.extend({
   },
   sync: function() {
     var self = this;
-    console.log(templateCache[this.url]);
+    //console.log(templateCache[this.url]);
     if(templateCache[this.url]) {
       this.hbs = templateCache[this.url];
       this.trigger('sync');
@@ -30,7 +30,6 @@ var TemplateModel = Backbone.Model.extend({
   },
   onHbs: function(hbsRaw) {
     this.compile(hbsRaw);
-    console.log('hey')
     templateCache[this.url] = this.hbs;
     this.trigger('sync');
   },

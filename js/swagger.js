@@ -2,7 +2,6 @@ var _          = require('underscore');
 var Backbone   = require('backbone');
 var Eddy       = require('./eddy');
 var Template   = require('./template-loader');
-//var Semantic   = require('../semantic/dist/semantic.min.js');
 var _String    = require("underscore.string");
 
 var Parameters = Backbone.Model.extend({
@@ -102,8 +101,26 @@ var ApiModel = Backbone.Model.extend({
   }
 });
 
+var ApiDetail = Backbone.View.extend({
+  data: null,
+  initialize: function(opt) {
+    this.model = opt.data;
+    this.renderTemplate();
+  },
+  renderTemplate: function() {
+    this.templateView = new Template.TemplateView({
+      template: 'api-detail',
+      el      : '.api-detail',
+      data    : this.model
+    });
+  }
+});
+
 var ApiEndpoint = Backbone.View.extend({
   data: null,
+  events: {
+    'click .endpoint-header': 'onClick'
+  },
   initialize: function(opt) {
     this.model = opt.data;
     this.renderTemplate();
@@ -124,29 +141,24 @@ var ApiEndpoint = Backbone.View.extend({
       });
       self.listenTo(apiDetail.templateView,'loaded',function() {
         self.templateView.$el.append(apiDetail.templateView.$el);
+        self.$('.api-detail').hide();
       });
     });
-  }
-});
+    this.$el = this.templateView.$el;
+    this.delegateEvents(this.events);
 
-var ApiDetail = Backbone.View.extend({
-  data: null,
-  initialize: function(opt) {
-    this.model = opt.data;
-    this.renderTemplate();
   },
-  renderTemplate: function() {
-    this.templateView = new Template.TemplateView({
-      template: 'api-detail',
-      el      : '.api-detail',
-      data    : this.model
-    });
+  onClick: function() {
+    this.$('.api-detail').slideToggle({duration: 1000});
   }
 });
 
 var ApiGroup = Backbone.View.extend({
   data: null,
   appendTo: null,
+  events: {
+    'click .group-header': 'onClick'
+  },
   initialize: function(opt) {
     this.model = opt.data;
     this.renderTemplate();
@@ -169,8 +181,14 @@ var ApiGroup = Backbone.View.extend({
       self.children.push(apiEndpoint);
       self.listenTo(apiEndpoint.templateView,'loaded',function() {
         self.templateView.$('.endpoint').append(apiEndpoint.templateView.$el);
+        self.$('.group-content').hide();
       });
     });
+    this.$el = this.templateView.$el;
+    this.delegateEvents(this.events);
+  },
+  onClick: function() {
+    this.$('.group-content').slideToggle({duration: 1000});
   }
 });
 
