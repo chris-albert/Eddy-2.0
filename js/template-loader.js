@@ -3,7 +3,62 @@ var Backbone   = require('backbone');
 var $          = require('jquery');
 var Handlebars = require('handlebars');
 
-var templateCache = {};
+var TemplateCache = new (Backbone.Model.extend({
+  cache: null,
+  initialize: function() {
+    this.cache = {};
+  },
+  isCached: function(name) {
+    return this.getCache(name) != null;
+  },
+  isPendingCached: function(name) {
+    var c = this.cache[name];
+    return c && c.pending;
+  },
+  setCache: function(name,data) {
+    this.cache[name] = data;
+  },
+  getCache: function(name) {
+    var c = this.cache[name];
+    if(c && !c.pending) {
+      return c.data;
+    }
+    return null;
+  },
+  pendingCache: function(name) {
+    this.setCache(name,{
+      pending: true,
+      data   : null
+    });
+  },
+  finalizeCache: function(name,data) {
+    var finalizedCache = {
+      pending: false,
+      data   : data
+    };
+    this.trigger('cache:finalized:' + name,finalizedCache);
+    this.setCache(name,finalizedCache);
+  },
+  doCache: function(key,funcMiss,funcHit) {
+    var self = this;
+    if(this.isCached(key)) {
+      funcHit(this.getCache(key));
+    } else if(this.isPendingCached(key)) {
+      this.on('cache:finalized:' + key,function(cache) {
+        funcHit(cache.data);
+      });
+    } else {
+      this.pendingCache(key);
+      var r = funcMiss();
+      if(_.isFunction(r['then'])) {
+        r.then(function(d) {
+          funcHit(d);
+          self.finalizeCache(key,d);
+        });
+      }
+    }
+  }
+}));
 
 var TemplateModel = Backbone.Model.extend({
   templateDir: 'handlebars',
@@ -16,25 +71,18 @@ var TemplateModel = Backbone.Model.extend({
   },
   sync: function() {
     var self = this;
-    //console.log(templateCache[this.url]);
-    if(templateCache[this.url]) {
-      this.hbs = templateCache[this.url];
-      this.trigger('sync');
-    } else {
-      Backbone.ajax({
-        url: this.url
-      }).then(function (d) {
-        self.onHbs(d);
+    TemplateCache.doCache(this.url,
+      function() {
+        return Backbone.ajax({
+          url: self.url
+        }).then(function (d) {
+          return self.handlebars.compile(d);
+        });
+      },
+      function(hit) {
+        self.hbs = hit;
+        self.trigger('sync');
       });
-    }
-  },
-  onHbs: function(hbsRaw) {
-    this.compile(hbsRaw);
-    templateCache[this.url] = this.hbs;
-    this.trigger('sync');
-  },
-  compile: function(hbsRaw) {
-    this.hbs = this.handlebars.compile(hbsRaw);
   },
   error: function(e) {
     console.log('in error');
@@ -51,6 +99,7 @@ var TemplateView = Backbone.View.extend({
   mainLoadedCount: 0,
   partialLoadedCount: 0,
   insertEl: null,
+  isCacheable: false,
   initialize: function(d) {
     this.data = d.data;
     this.model = new TemplateModel({template: d.template + '.hbs'});
