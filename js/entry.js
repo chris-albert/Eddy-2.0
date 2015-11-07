@@ -9,5 +9,6 @@ function bindSemanticJquery() {
 
 DomReady(function() {
   bindSemanticJquery();
-  new Swagger.ApiInfo();
+  //new Swagger.ApiInfo();
+  new Swagger.ApiTemplateView();
 });
