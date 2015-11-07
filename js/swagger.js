@@ -101,97 +101,6 @@ var ApiModel = Backbone.Model.extend({
   }
 });
 
-var ApiDetail = Backbone.View.extend({
-  data: null,
-  initialize: function(opt) {
-    this.model = opt.data;
-    this.renderTemplate();
-  },
-  renderTemplate: function() {
-    this.templateView = new Template.TemplateView({
-      template: 'api-detail',
-      el      : '.api-detail',
-      data    : this.model
-    });
-  }
-});
-
-var ApiEndpoint = Backbone.View.extend({
-  data: null,
-  events: {
-    'click .endpoint-header': 'onClick'
-  },
-  initialize: function(opt) {
-    this.model = opt.data;
-    this.renderTemplate();
-  },
-  renderTemplate: function() {
-    this.templateView = new Template.TemplateView({
-      template: 'api-endpoint',
-      el      : '.api-endpoint',
-      data    : this.model
-    });
-    this.listenTo(this.templateView,'loaded',this.templateLoaded);
-  },
-  templateLoaded: function() {
-    var self = this;
-    _.each(this.model.definitions,function(definition) {
-      var apiDetail = new ApiDetail({
-          data: definition
-      });
-      self.listenTo(apiDetail.templateView,'loaded',function() {
-        self.templateView.$el.append(apiDetail.templateView.$el);
-        self.$('.api-detail').hide();
-      });
-    });
-    this.$el = this.templateView.$el;
-    this.delegateEvents(this.events);
-
-  },
-  onClick: function() {
-    this.$('.api-detail').slideToggle({duration: 1000});
-  }
-});
-
-var ApiGroup = Backbone.View.extend({
-  data: null,
-  appendTo: null,
-  events: {
-    'click .group-header': 'onClick'
-  },
-  initialize: function(opt) {
-    this.model = opt.data;
-    this.renderTemplate();
-  },
-  renderTemplate: function() {
-    this.templateView = new Template.TemplateView({
-      template: 'api-group',
-      el      : '.api-group',
-      data    : this.model
-    });
-    this.listenTo(this.templateView,'loaded',this.templateLoaded);
-  },
-  templateLoaded: function() {
-    this.children = [];
-    var self = this;
-    _.each(this.model.paths,function(path) {
-      var apiEndpoint = new ApiEndpoint({
-        data: path
-      });
-      self.children.push(apiEndpoint);
-      self.listenTo(apiEndpoint.templateView,'loaded',function() {
-        self.templateView.$('.endpoint').append(apiEndpoint.templateView.$el);
-        self.$('.group-content').hide();
-      });
-    });
-    this.$el = this.templateView.$el;
-    this.delegateEvents(this.events);
-  },
-  onClick: function() {
-    this.$('.group-content').slideToggle({duration: 1000});
-  }
-});
-
 var ApiData = Backbone.View.extend({
   el: 'api-info',
   initialize: function(opt) {
@@ -206,40 +115,72 @@ var ApiData = Backbone.View.extend({
   }
 });
 
-var ApiInfo = Backbone.View.extend({
-  el: '.api-data',
+var ApiDetailView = Template.TemplateView.extend({
+  template: 'api-detail',
+  onTemplateLoaded: function() {
+    this.$el.hide();
+  }
+});
+
+var ApiEndpointView = Template.NestedTemplateView.extend({
+  template: 'api-endpoint',
+  childView: ApiDetailView,
+  childrenIterateKey: 'definitions',
+  events: {
+    'click .endpoint-header': 'onClick'
+  },
+  onClick: function() {
+    this.$('.api-detail').slideToggle({duration: 1000});
+  }
+});
+
+var ApiGroupView = Template.NestedTemplateView.extend({
+  template : 'api-group',
+  childView: ApiEndpointView,
+  childrenIterateKey: 'paths',
+  appendTo: '.endpoint',
+  events: {
+    'click .group-header': 'onClick'
+  },
+  onClick: function() {
+    this.$('.group-content').slideToggle({duration: 1000});
+  },
+  onTemplateLoaded: function() {
+    this.$('.group-content').hide();
+  }
+});
+
+var ApiContainerView = Template.NestedTemplateView.extend({
+  template : 'api-container',
+  childView: ApiGroupView
+});
+
+/**
+ * Loads the config json for the api, then asynchronously
+ * renders the `api-container` view.
+ */
+var ApiTemplateView = Backbone.View.extend({
+  el   : '.api-data',
   model: new ApiModel(),
-  templateView: null,
+  containerView: null,
   initialize: function() {
     this.listenTo(this.model,'sync',this.render);
     this.model.fetch();
   },
   render: function() {
-    this.renderTemplate();
-  },
-  renderTemplate: function() {
-    this.templateView = new Template.TemplateView({
-      template: 'api-container',
-      el      : '.api-container',
-      data    : this.model.get('processed')
-    });
-    this.listenTo(this.templateView,'loaded',this.templateLoaded);
-  },
-  templateLoaded: function() {
-    this.$el.html(this.templateView.$el);
-    this.$el.parent().removeClass('loading');
     var self = this;
-    this.children = [];
-    _.each(this.model.get('processed'),function(group,name) {
-      var apiGroup = new ApiGroup({data: group});
-      self.children.push(apiGroup);
-      self.listenTo(apiGroup.templateView,'loaded',function() {
-        self.templateView.$el.append(apiGroup.templateView.$el);
-      });
+    this.containerView = new ApiContainerView({
+      data: this.model.get('processed')
     });
+    //When the container view is loaded we want to put template in
+    //our html and remove the loading spinner
+    this.listenTo(this.containerView,'loaded',function() {
+      self.$el.html(this.containerView.$el);
+      self.$el.parent().removeClass('loading');
+    })
   }
 });
 
 module.exports = {
-  ApiInfo: ApiInfo
+  ApiTemplateView: ApiTemplateView
 };

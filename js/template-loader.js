@@ -90,23 +90,30 @@ var TemplateModel = Backbone.Model.extend({
   }
 });
 
+/**
+ * Template views are loaded asynchronously from the server
+ */
 var TemplateView = Backbone.View.extend({
-  data        : null,
-  model       : null,
-  renderOnLoad: true,
-  partials    : null,
-  partialHash : null,
-  mainLoadedCount: 0,
+  //The data that will be applied to your handlebars template
+  data              : null,
+  model             : null,
+  renderOnLoad      : true,
+  partials          : null,
+  partialHash       : null,
+  mainLoadedCount   : 0,
   partialLoadedCount: 0,
-  insertEl: null,
-  isCacheable: false,
-  initialize: function(d) {
-    this.data = d.data;
-    this.model = new TemplateModel({template: d.template + '.hbs'});
-    this.partials = d.partials || [];
+  insertEl          : null,
+  isCacheable       : false,
+  initialize: function(opt) {
+    this.data = this.data || opt.data;
+    this.model = new TemplateModel({template: this.template + '.hbs'});
+    this.partials = this.partials || [];
     this.partialHash = {};
-
+    if(!this.el && this.template) {
+      this.el = '.' + this.template;
+    }
     this.load();
+    this.on('loaded',this.onTemplateLoaded);
   },
   load: function() {
     if(this.renderOnLoad) {
@@ -143,8 +150,10 @@ var TemplateView = Backbone.View.extend({
     this.attachPartials();
     this.template = this.model.hbs(this.data);
     this.$el = $('<div />').html(this.template).contents();
+    this.delegateEvents(this.events);
     this.trigger('loaded');
   },
+  onTemplateLoaded: function() {},
   attachPartials: function() {
     var self = this;
     _.each(this.partialHash,function(template,name) {
@@ -153,7 +162,51 @@ var TemplateView = Backbone.View.extend({
   }
 });
 
+var NestedTemplateView = TemplateView.extend({
+  childrenTemplates: null,
+  childView: null,
+  data: null,
+  childrenIterateKey: null,
+  appendTo: null,
+  initialize: function(opt) {
+    this.data = this.data || opt.data;
+    if(!this.childView) {
+      console.error('You must specify a child view for nested templates to work');
+      return;
+    }
+    this.childrenTemplates = this.childrenTemplates || [];
+    NestedTemplateView.__super__.initialize.apply(this,opt);
+
+    this.renderChildren();
+  },
+  renderChildren: function() {
+    _.each(this.getIterable(),function(value) {
+      var child = new this.childView({data: value});
+      this.childrenTemplates.push(child);
+      this.listenTo(child,'loaded',function() {
+        if(this.appendTo) {
+          this.$(this.appendTo).append(child.$el);
+        } else {
+          this.$el.append(child.$el);
+        }
+      },this);
+    },this);
+  },
+  /**
+   * What you want to iterate over for rendering children,
+   * by default this is just the base of this classes data
+   */
+  getIterable: function() {
+    if(this.childrenIterateKey) {
+      return this.data[this.childrenIterateKey];
+    } else {
+      return this.data;
+    }
+  }
+});
+
 module.exports = {
-  TemplateModel: TemplateModel,
-  TemplateView : TemplateView
+  TemplateModel     : TemplateModel,
+  TemplateView      : TemplateView,
+  NestedTemplateView: NestedTemplateView
 };
