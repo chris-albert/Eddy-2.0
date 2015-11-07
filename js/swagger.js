@@ -123,8 +123,8 @@ var ApiDetailView = Template.TemplateView.extend({
 });
 
 var ApiEndpointView = Template.NestedTemplateView.extend({
-  template: 'api-endpoint',
-  childView: ApiDetailView,
+  template          : 'api-endpoint',
+  childView         : ApiDetailView,
   childrenIterateKey: 'definitions',
   events: {
     'click .endpoint-header': 'onClick'
@@ -135,10 +135,10 @@ var ApiEndpointView = Template.NestedTemplateView.extend({
 });
 
 var ApiGroupView = Template.NestedTemplateView.extend({
-  template : 'api-group',
-  childView: ApiEndpointView,
+  template          : 'api-group',
+  childView         : ApiEndpointView,
   childrenIterateKey: 'paths',
-  appendTo: '.endpoint',
+  appendTo          : '.endpoint',
   events: {
     'click .group-header': 'onClick'
   },
@@ -160,8 +160,8 @@ var ApiContainerView = Template.NestedTemplateView.extend({
  * renders the `api-container` view.
  */
 var ApiTemplateView = Backbone.View.extend({
-  el   : '.api-data',
-  model: new ApiModel(),
+  el           : '.api-data',
+  model        : new ApiModel(),
   containerView: null,
   initialize: function() {
     this.listenTo(this.model,'sync',this.render);
